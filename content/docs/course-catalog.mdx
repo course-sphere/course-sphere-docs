@@ -1,0 +1,95 @@
+---
+title: Course Catalog (Trang /course)
+description: API endpoints for the public course catalog, including search, filtering, and pagination.
+---
+
+# Public Course Catalog
+
+Trang danh mục khóa học (Public Route: `/course`). Trang này cho phép tất cả người dùng lướt xem các khóa học đã được public (xuất bản), tìm kiếm và lọc dữ liệu.
+
+---
+
+## 1. Get Published Courses (Tìm kiếm & Lọc)
+
+Đây là API quan trọng nhất của trang. Frontend sẽ gọi API này mỗi khi người dùng gõ tìm kiếm, đổi bộ lọc, hoặc chuyển trang.
+
+- **Method:** `GET`
+- **Endpoint:** `/courses` (Hoặc `/api/v1/courses`)
+- **Auth:** Public (Không cần token)
+
+### Query Parameters
+
+Frontend sẽ map các state (`search`, `selectedCategory`, `selectedLevel`, `cost`, `pagination`) thành các tham số URL:
+
+| Parameter | Type | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `search` | `string` | Tìm kiếm theo `title` hoặc `instructor` | `""` |
+| `category` | `string` | Lọc theo danh mục. Gửi `"all"` hoặc bỏ trống nếu lấy tất cả | `"all"` |
+| `level` | `string` | Lọc theo trình độ (Beginner, Intermediate...). Gửi `"all"` nếu lấy tất cả | `"all"` |
+| `cost` | `string` | Lọc theo giá tiền. Nhận giá trị: `"free"`, `"paid"`, hoặc `"all"` | `"all"` |
+| `page` | `number` | Index của trang (Bắt đầu từ 0 để match với React Table) | `0` |
+| `limit` | `number` | Số lượng item trên 1 trang (Page Size) | `8` |
+
+*Ví dụ Request URL:* `GET /courses?search=react&category=Web%20Development&level=Beginner&cost=free&page=0&limit=8`
+
+### Expected Response (200 OK)
+
+**Note** - Chỉ trả về các khóa học có `status: "published"`.
+- KHÔNG cần trả về mảng `modules` chi tiết ở API này (chỉ cần data vừa đủ cho cái Card).
+Example:
+```json
+{
+  "success": true,
+  "data": {
+    "courses": [
+      {
+        "id": "course-1771579477259",
+        "title": "Advanced React Patterns 2026",
+        "category": "Web Development",
+        "level": "Advanced",
+        "rating": 4.8,
+        "ratingCount": 1250,
+        "instructor": "Nam Dang",
+        "students": 5000,
+        "price": "49.99",
+        "image": "[https://s3.bucket](https://s3.bucket).../react.jpg"
+      }
+    ],
+    "totalElements": 45 // Tổng số records khớp với điều kiện lọc (để FE làm phân trang)
+  }
+}
+```
+
+---
+
+## 2. Get Categories (Filter Data)
+
+Hiện tại Frontend đang hardcode mảng `levels` (Beginner, Intermediate, Advanced) vì dữ liệu này rất ít khi thay đổi. Tuy nhiên, mảng `categories` (Danh mục khóa học) cần được lấy động từ hệ thống để Frontend render bộ lọc.
+
+- **Method:** `GET`
+- **Endpoint:** `/categories` (Hoặc `/categories`)
+- **Auth:** Public (Không cần token)
+
+### Expected Response (200 OK)
+
+Backend chỉ cần trả về mảng danh sách các danh mục đang có trên hệ thống.
+Example:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cat_1",
+      "name": "Web Development"
+    },
+    {
+      "id": "cat_2",
+      "name": "Data Science"
+    },
+    {
+      "id": "cat_3",
+      "name": "Design"
+    }
+  ]
+}
+```

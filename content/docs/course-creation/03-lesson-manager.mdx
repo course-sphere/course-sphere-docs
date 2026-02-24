@@ -1,0 +1,35 @@
+---
+title: Phase 3 - Lesson Manager
+description: API payload for creating lessons inside a module.
+---
+
+# Phase 3: Lesson Manager
+
+Mỗi Module chứa nhiều Lesson. Frontend sẽ truyền `module_id` lấy được từ Phase 2.
+
+## Create Lesson
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/modules/{module_id}/lessons`
+
+### Request Payload
+
+```json
+{
+  "module_id": "module-1771579512213-ccgys56xu",
+  "title": "Lesson 1 in module 1",
+  "sort_order": 1
+}
+```
+
+### Expected Response
+Trả về `lesson_id` để FE có thể đính kèm Material (Video, Bài tập...) vào bài học này.
+Example:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "lesson-1771579541228-nqabf0si8"
+  }
+}
+```

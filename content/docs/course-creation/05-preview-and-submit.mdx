@@ -1,0 +1,82 @@
+---
+title: Phase 5 - Preview & Submit
+description: APIs for instructors to preview their course materials and submit the draft course for admin review.
+---
+
+# Phase 5: Preview & Submit
+
+Giai đoạn cuối cùng của luồng tạo khóa học. Trang này (`/courses/{id}/preview`) cho phép giảng viên xem lại toàn bộ nội dung dưới góc nhìn của học viên (nhưng không bị giới hạn quyền truy cập) và thực hiện hành động gửi duyệt (Submit for Review).
+
+---
+
+## 1. Get Material Detail (Instructor View)
+
+API này dùng để lấy nội dung bài học đổ vào Viewers. 
+
+**Khác biệt so với luồng Student/Public:** Giảng viên hoặc Admin được quyền xem **toàn bộ** nội dung, bất kể material đó có được cấu hình `is_preview` hay không, và bất kể khóa học đang ở trạng thái `draft`.
+
+- **Method:** `GET`
+- **Endpoint:** `/materials/{materialId}` (Hoặc `/instructor/materials/{materialId}`)
+- **Auth:** Required (Phải kiểm tra token: User phải là tác giả của khóa học này, hoặc là Admin).
+
+### Expected Response
+
+Trả về data đa hình. Cấu trúc y hệt lúc tạo (Phase 4). Backend không cần lọc hay che giấu thông tin gì ở đây cả.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "mat_1",
+    "lesson_id": "les_1",
+    "item_type": "coding",
+    "title": "Build a Custom Hook",
+    "coding_data": {
+      "description": "...",
+      "starter_code": "...",
+      "language": "javascript"
+    }
+  }
+}
+```
+
+---
+
+## 2. Submit Course for Review
+
+Hành động quan trọng nhất để kết thúc Flow 1 (Course Creation). Khi giảng viên bấm "Submit for Review", Frontend sẽ gọi API này để báo cho hệ thống biết khóa học đã hoàn thiện.
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/courses/{courseId}/submit`
+- **Auth:** Required (Instructor - Tác giả khóa học)
+
+### Logic
+1. Đổi field `status` của khóa học từ `draft` (Bản nháp) sang `pending` (Chờ duyệt).
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "Course submitted for review successfully.",
+  "data": {
+    "id": "course-123",
+    "status": "pending",
+    "submitted_at": "2026-02-24T10:00:00Z"
+  }
+}
+```
+
+### Error Response
+
+Nếu Backend validate thấy khóa học trống rỗng (chưa tạo module/lesson nào) mà giảng viên cố tình bấm Submit.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Cannot submit course. Please add at least one module and one lesson before submitting."
+  }
+}
+```

@@ -1,0 +1,205 @@
+---
+title: Learning Workspace (Trang course/{id}/learn)
+description: APIs for the interactive learning environment, syllabus navigation, and progress tracking.
+---
+
+# Learning Workspace
+
+Đây là khu vực "Phòng học" dành cho học viên (`/course/{id}/learn`). Hệ thống chia làm 2 phần chính: Sidebar (Hiển thị Syllabus & Progress) và Main Content (Hiển thị Viewer nội dung bài học).
+
+---
+
+## 1. Get Learning Syllabus & Progress (Sidebar)
+
+Lấy danh sách đề cương khóa học kèm theo tiến độ học tập của user. API này được gọi khi user mới vào phòng học để render Sidebar và thanh Progress.
+
+- **Method:** `GET`
+- **Endpoint:** `/learn/courses/{courseId}/syllabus`
+- **Auth:** Required
+
+### Expected Response
+
+**Note:** - `progress`: Dùng để vẽ thanh phần trăm tiến độ học tập.
+- `active_material_id`: ID của bài học cuối cùng mà user đang học dở (để FE tự động focus và chuyển route nếu user không truyền param).
+- `materials[].is_completed`: Dùng để tick xanh (CheckCircle) các bài đã học xong trên Sidebar.
+
+```json
+{
+  "success": true,
+  "data": {
+    "course_id": "course-123",
+    "course_title": "Advanced React Patterns",
+    "progress": {
+      "percentage": 45,
+      "completed_materials": 9,
+      "total_materials": 20
+    },
+    "active_material_id": "mat_2",
+    "modules": [
+      {
+        "id": "mod_1",
+        "course_id": "course-123",
+        "title": "Module 1: Foundations",
+        "sort_order": 1,
+        "lessons": [
+          {
+            "id": "les_1",
+            "module_id": "mod_1",
+            "title": "Introduction to Hooks",
+            "sort_order": 1,
+            "materials": [
+              {
+                "id": "mat_1",
+                "lesson_id": "les_1",
+                "item_type": "video",
+                "title": "What are Hooks?",
+                "sort_order": 1,
+                "is_required": true,
+                "is_preview": true,
+                "is_completed": true,
+                "duration": 15
+              },
+              {
+                "id": "mat_2",
+                "lesson_id": "les_1",
+                "item_type": "coding",
+                "title": "Build a custom hook",
+                "sort_order": 2,
+                "is_required": true,
+                "is_preview": false,
+                "is_completed": false,
+                "language": "javascript"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 2. Get Material Detail (Main Viewer)
+
+Khi user click vào một bài học trên Sidebar, FE sẽ có `materialId`. Gọi API này để lấy nội dung chi tiết (video url, reading content, starter code...) để đưa vào Viewers (reading, video, coding, file, quiz).
+
+- **Method:** `GET`
+- **Endpoint:** `/learn/materials/{materialId}`
+- **Auth:** Required
+
+### Expected Response (Ví dụ cho loại Video)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "mat_1",
+    "lesson_id": "les_1",
+    "item_type": "video",
+    "title": "What are Hooks?",
+    "is_completed": false,
+    "video_data": {
+      "video_url": "[https://s3.bucket](https://s3.bucket).../video.mp4",
+      "duration": 15,
+      "description": "<p>Course description here</p>"
+    }
+  }
+}
+```
+
+---
+
+## 3. Mark Material as Complete (Manual Complete)
+
+Dành cho các loại nội dung thụ động (`reading`, `file`, `video`). Khi user bấm nút **"Mark as Done"**, FE gọi API này để đánh dấu hoàn thành và cập nhật % tiến độ.
+
+- **Method:** `POST`
+- **Endpoint:** `/learn/materials/{materialId}/complete`
+- **Auth:** Required
+
+### Expected Response
+
+Backend trả về object `progress` mới để FE cập nhật lại thanh tiến độ ngay lập tức mà không cần fetch lại toàn bộ Syllabus.
+
+```json
+{
+  "success": true,
+  "data": {
+    "progress": {
+      "percentage": 50,
+      "completed_materials": 10,
+      "total_materials": 20
+    }
+  }
+}
+```
+
+---
+
+## 4. Submit Quiz (Lưu kết quả trắc nghiệm)
+
+Do dữ liệu `is_correct` đã được BE trả về sẵn ở API lấy chi tiết Material, Frontend sẽ tự động chấm điểm và tính toán % ngay trên trình duyệt.
+
+Khi học sinh làm xong, Frontend sẽ gọi API này để gửi kết quả cuối cùng cho Backend lưu lại lịch sử học tập.
+
+- **Method:** `POST`
+- **Endpoint:** `/learn/materials/{materialId}/quiz/submit`
+- **Auth:** Required (Student)
+
+### Request Payload
+
+Frontend chỉ gửi lên phần trăm điểm số đạt được và trạng thái Pass/Fail.
+
+```json
+{
+  "percentage": 85,
+  "passed": true
+}
+```
+
+### Expected Response
+
+Backend tiếp nhận điểm số, đánh dấu bài học hoàn thành (nếu passed == true) và trả về object `progress` mới nhất để Frontend update thanh tiến độ.
+
+```json
+{
+  "success": true,
+  "data": {
+    "is_completed": true,
+    "progress": {
+      "percentage": 55,
+      "completed_materials": 11,
+      "total_materials": 20
+    }
+  }
+}
+```
+## 5. Submit Coding Exercise (Later)
+
+Gửi mã nguồn bài tập code của user. Tính năng này thường cần Instructor hoặc Peer review nên tạm thời hệ thống sẽ ghi nhận trạng thái "Submitted".
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/learn/materials/{materialId}/coding/submit`
+- **Auth:** Required
+
+### Request Payload
+
+```json
+{
+  "submitted_code": "function useToggle() { return [value, toggle]; }"
+}
+```
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "Your code has been submitted for review successfully.",
+  "data": {
+    "status": "pending_review"
+  }
+}
+```

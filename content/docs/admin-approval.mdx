@@ -1,0 +1,102 @@
+---
+title: Content Governance (Admin)
+description: APIs for administrators to review, approve, or reject course submissions.
+---
+
+# Content Governance (Admin Approvals)
+
+Trang dành cho Admin (`/admin/approvals`) để xét duyệt các khóa học do giảng viên gửi lên. Admin có thể xem trước nội dung khóa học, sau đó quyết định Approve (Publish) hoặc Reject (kèm lý do).
+
+---
+
+## 1. Get Course Submissions (Approval List)
+
+Lấy danh sách các yêu cầu xét duyệt khóa học. API này cần hỗ trợ phân trang (Pagination) và bộ lọc (Search, Status).
+
+- **Method:** `GET`
+- **Endpoint:** `/api/v1/admin/approvals`
+- **Auth:** Required (Admin Role)
+
+### Query Parameters
+
+| Parameter | Type | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `search` | `string` | Tìm kiếm theo tiêu đề khóa học hoặc tên giảng viên | `""` |
+| `status` | `string` | Lọc theo trạng thái (`pending`, `approved`, `rejected`). Gửi `"all"` nếu lấy tất cả. | `"pending"` |
+| `page` | `number` | Index của trang (Bắt đầu từ 0) | `0` |
+| `limit` | `number` | Số lượng item trên 1 trang | `5` |
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "requests": [
+      {
+        "id": "req-001",
+        "courseId": "course-123",
+        "courseTitle": "Advanced React Patterns",
+        "thumbnail": "[https://s3.bucket/thumb.jpg](https://s3.bucket/thumb.jpg)",
+        "category": "Web Development",
+        "instructorName": "Nam Dang",
+        "instructorEmail": "namdang@example.com",
+        "instructorAvatar": "[https://s3.bucket/avatar.jpg](https://s3.bucket/avatar.jpg)",
+        "submittedAt": "2026-02-24T09:00:00Z",
+        "status": "pending"
+      }
+    ],
+    "totalElements": 1,
+    "stats": {
+      "pending_count": 5,
+      "approved_this_week": 12
+    }
+  }
+}
+```
+
+---
+
+## 2. Approve Course (Duyệt)
+
+Chuyển trạng thái khóa học từ `pending` sang `published`. Khóa học sẽ ngay lập tức xuất hiện trên trang Catalog public.
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/admin/approvals/{courseId}/approve`
+- **Auth:** Required (Admin Role)
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "Course approved and published successfully."
+}
+```
+
+---
+
+## 3. Reject Course (Từ chối)
+
+Chuyển trạng thái khóa học từ `pending` sang `rejected`. Admin bắt buộc phải gửi kèm lý do từ chối để giảng viên biết và sửa lại.
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/admin/approvals/{courseId}/reject`
+- **Auth:** Required (Admin Role)
+
+### Request Payload
+
+```json
+{
+  "reason": "Chất lượng âm thanh ở Module 2 quá rè. Vui lòng thu âm lại trước khi submit."
+}
+```
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "Course rejected. Feedback sent to instructor."
+}
+```

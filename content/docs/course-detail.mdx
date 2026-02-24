@@ -1,0 +1,228 @@
+---
+title: Course Detail Page (Trang course/{id})
+description: API endpoints for rendering the public course detail page and handling enrollment/cart logic.
+---
+
+# Course Detail & Enrollment Flow
+
+Trang Chi tiết khóa học (`/course/{id}`) là nơi hiển thị toàn bộ thông tin giới thiệu, cấu trúc bài học và xử lý logic mua/đăng ký. Đây là trang có lượng tải data lớn.
+
+---
+
+## 1. Get Course Metadata (Basic Info)
+
+Lấy thông tin tổng quan để render giao diện chính (Banner, Tiêu đề, Giá, Giảng viên, Thống kê...).
+
+- **Method:** `GET`
+- **Endpoint:** `/courses/{courseId}`
+- **Auth:** Public
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "course-123",
+    "title": "Advanced React Patterns 2026",
+    "subtitle": "Master modern React architecture",
+    "description": "Full HTML description...",
+    "category": [ { "id": "cat_1", "text": "Web Development" } ],
+    "level": "intermediate",
+    "thumbnail_url": "[https://s3.bucket/thumb.jpg](https://s3.bucket/thumb.jpg)",
+    "promo_video_url": "[https://youtube.com/watch?v=](https://youtube.com/watch?v=)...",
+    "is_free": false,
+    "price": 49.99,
+    "discount_price": 29.99,
+    "prerequisites": [],
+    "requirements": ["Basic JS knowledge", "NodeJS installed"],
+    "learning_objectives": ["Build scalable apps", "Manage complex state"],
+    "target_audience": ["Frontend developers"],
+    "instructor": {
+      "id": "inst_123",
+      "name": "Nam Dang",
+      "avatar_url": "[https://s3.bucket/avatar.jpg](https://s3.bucket/avatar.jpg)"
+    },
+    "status": "published",
+    "rating": 4.8,
+    "rating_count": 120,
+    "enrolled_students": 1500,
+    "total_video_duration_minutes": 650,
+    "total_coding_exercises": 15,
+    "total_file_resources": 5,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-02-24T00:00:00Z"
+  }
+}
+```
+
+---
+
+## 2. Get Course Syllabus (Curriculum)
+
+Lấy toàn bộ cấu trúc chương trình học để render thành danh sách (Accordion). 
+
+- **Method:** `GET`
+- **Endpoint:** `/courses/{courseId}/syllabus`
+- **Auth:** Public
+
+### Expected Response
+
+**Note:** Ở API này, KHÔNG trả về nội dung chi tiết của `material` (không có link video thật, không có text bài đọc...). Chỉ trả về các Metadata cơ bản để hiển thị danh sách. Quan trọng nhất là field `is_preview: true` để FE hiện nút "Preview" cho người chưa mua.
+
+```json
+{
+  "success": true,
+  "data": {
+    "course_id": "course-123",
+    "course_title": "Advanced React Patterns",
+    "modules": [
+      {
+        "id": "mod_1",
+        "course_id": "course-123",
+        "title": "Module 1: Foundations",
+        "sort_order": 1,
+        "lessons": [
+          {
+            "id": "les_1",
+            "module_id": "mod_1",
+            "title": "Introduction to Hooks",
+            "sort_order": 1,
+            "materials": [
+              {
+                "id": "mat_1",
+                "lesson_id": "les_1",
+                "item_type": "video",
+                "title": "What are Hooks?",
+                "sort_order": 1,
+                "is_required": true,
+                "is_preview": true,
+                "is_completed": false,
+                "duration": 15
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 3. Check Enrollment & Interaction Status
+
+Khi user đã đăng nhập vào xem trang chi tiết, FE cần biết user này có quyền hạn gì với khóa học để đổi trạng thái UI (Nút "Buy Now" -> "Continue Learning", Nút "Add to Cart" -> "Go to Cart").
+
+- **Method:** `GET`
+- **Endpoint:** `/courses/{courseId}/status`
+- **Auth:** Required (Chỉ gọi khi có User Token)
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "is_enrolled": false, // Nếu true -> Hiện nút "Continue Learning"
+    "is_in_cart": true, // Nếu true -> Đổi nút Add to Cart thành "Go to Cart"
+    "is_instructor": false // Nếu true -> Khóa học do chính người này tạo, hiện nút "Edit Course"
+  }
+}
+```
+
+---
+
+## 4. Handle Enrollment
+
+Nếu khóa học `is_free: true`, user không cần qua bước thanh toán hay giỏ hàng. Khi bấm "Enroll", FE sẽ gọi API này để cấp quyền truy cập ngay lập tức.
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/courses/{courseId}/enroll`
+- **Auth:** Required (Student)
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "Enrolled successfully",
+  "data": {
+    "enrollment_id": "enr_12345"
+  }
+}
+```
+
+---
+
+## 5. Cart Operations (Paid Course)
+
+Nếu khóa học là khóa trả phí (`is_free: false`), user sẽ thêm khóa học vào giỏ hàng.
+
+### Add to Cart
+- **Method:** `POST`
+- **Endpoint:** `/cart/items`
+- **Auth:** Required
+
+**Request Payload:**
+```json
+{
+  "course_id": "course-123"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "message": "Course added to cart"
+}
+```
+
+## 6. Get Preview Material Content
+
+API này dùng để lấy nội dung chi tiết của một bài học (Link video, Nội dung đọc...) để user xem thử trước khi mua. 
+
+**Trigger từ Frontend:** Khi user click vào một bài học có nhãn `Preview` trong phần Course Curriculum, Frontend sẽ bật Modal và gọi API này để lấy nội dung phát.
+
+- **Method:** `GET`
+- **Endpoint:** `/materials/{materialId}/preview`
+- **Auth:** Public
+
+Checkis_preview:
+- Nếu **True**: Trả về dữ liệu chi tiết.
+- Nếu **False**: Trả về mã lỗi `403 Forbidden` ngay lập tức để chống user cố tình gọi API lấy trộm nội dung bài học thu phí.
+
+### Expected Response (200 OK)
+
+Dữ liệu trả về sẽ tùy thuộc vào `item_type` của material đó (Giống Phase 4 của Course Creation). Dưới đây là ví dụ trả về một Video học thử:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "mat_1",
+    "lesson_id": "les_1",
+    "item_type": "video",
+    "title": "What are Hooks?",
+    "video_data": {
+      "video_url": "[https://s3.bucket.com/video_preview_1.mp4](https://s3.bucket.com/video_preview_1.mp4)",
+      "duration": 15,
+      "description": "<p>Đây là video học thử của khóa học...</p>"
+    }
+  }
+}
+```
+
+### Error Response (403 Forbidden - Khi bài học không cho phép học thử)
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "FORBIDDEN_MATERIAL",
+    "message": "This material is not available for preview. Please enroll in the course to view this content."
+  }
+}
+```

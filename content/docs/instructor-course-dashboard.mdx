@@ -1,0 +1,104 @@
+---
+title: Instructor Dashboard (instructor/courses)
+description: APIs for instructors to manage their created courses, view status, and track revenue.
+---
+
+# Instructor Dashboard (My Courses)
+
+Trang tổng quan dành cho Giảng viên (`/instructor/courses`). Nơi họ quản lý toàn bộ khóa học do mình tạo ra, xem trạng thái phê duyệt và theo dõi doanh thu.
+
+---
+
+## 1. Get Instructor Statistics
+
+Lấy dữ liệu thống kê tổng quan để hiển thị ở các Card đầu trang (Total Courses, Active Students, Total Revenue).
+
+- **Method:** `GET`
+- **Endpoint:** `1/instructor/stats`
+- **Auth:** Required (Instructor)
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_courses": 12,
+    "active_students": 1540,
+    "total_revenue": 15000.50
+  }
+}
+```
+
+---
+
+## 2. Get Instructor Courses (List)
+
+Lấy danh sách khóa học của giảng viên đang đăng nhập. API này cần hỗ trợ phân trang (Pagination) và bộ lọc (Search, Status).
+
+- **Method:** `GET`
+- **Endpoint:** `/api/v1/instructor/courses`
+- **Auth:** Required (Instructor)
+
+### Query Parameters
+
+| Parameter | Type | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `search` | `string` | Tìm kiếm theo tiêu đề khóa học | `""` |
+| `status` | `string` | Lọc theo trạng thái (`draft`, `pending`, `published`, `rejected`). Gửi `"all"` nếu lấy tất cả. | `"all"` |
+| `page` | `number` | Index của trang (Bắt đầu từ 0) | `0` |
+| `limit` | `number` | Số lượng item trên 1 trang | `5` |
+
+### Expected Response
+
+**NOTE:** Cấu trúc trả về cần tinh gọn, chỉ bao gồm các trường cần thiết để render cái Card danh sách. Đặc biệt, nếu `status == "rejected"`, BE **phải trả về thêm trường `reject_reason`** để FE hiển thị cho giảng viên biết lý do.
+
+```json
+{
+  "success": true,
+  "data": {
+    "courses": [
+      {
+        "id": "course-1",
+        "title": "Advanced React Patterns",
+        "thumbnail": "[https://s3.bucket/thumb.jpg](https://s3.bucket/thumb.jpg)",
+        "category": "Web Development",
+        "status": "published",
+        "students": 1200,
+        "revenue": 10500,
+        "updatedAt": "2026-02-24T10:00:00Z"
+      },
+      {
+        "id": "course-2",
+        "title": "NextJS Fullstack Masterclass",
+        "thumbnail": "[https://s3.bucket/next.jpg](https://s3.bucket/next.jpg)",
+        "category": "Web Development",
+        "status": "rejected",
+        "students": 0,
+        "revenue": 0,
+        "updatedAt": "2026-02-23T15:30:00Z",
+        "reject_reason": "Video quality in Module 2 is too low. Please re-upload in 1080p."
+      }
+    ],
+    "totalElements": 2
+  }
+}
+```
+
+---
+
+## 3. Delete / Cancel Course Operations
+
+Các thao tác phụ từ các nút bấm trên Card khóa học.
+
+### Xóa bản nháp (Draft)
+- **Method:** `DELETE`
+- **Endpoint:** `/api/v1/courses/{courseId}`
+- **Auth:** Required (Instructor - Tác giả)
+- **Điều kiện:** BE chỉ cho phép xóa nếu khóa học đang ở trạng thái `draft`.
+
+### Hủy yêu cầu duyệt (Cancel Request)
+- **Method:** `POST` (hoặc `PATCH`)
+- **Endpoint:** `/api/v1/courses/{courseId}/cancel-review`
+- **Auth:** Required (Instructor - Tác giả)
+- **Điều kiện:** BE chỉ cho phép thực hiện nếu khóa học đang ở trạng thái `pending`. Hành động này sẽ đưa `status` quay về lại `draft`.
