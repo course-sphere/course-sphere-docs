@@ -1,0 +1,227 @@
+---
+title: Group Controller
+description: Quản lý nhóm quyền (Group) - CRUD + phân trang danh sách
+---
+
+> API này tuân theo [API Response Convention](/docs/api-response) của hệ thống.
+
+## Tổng quan
+
+**Group** là “nhóm quyền” (permission group).  
+Mỗi group có thể được gán nhiều permission.
+
+Frontend dùng Group API để:
+- Tạo/sửa/xoá nhóm quyền
+- Xem danh sách group (phân trang) để hiển thị trên UI quản trị
+- Xem chi tiết group
+
+---
+
+## Quyền truy cập
+
+Controller có annotation:
+
+✅ Chỉ role `ADMIN` mới gọi được các API của Group Controller.
+
+---
+
+## Endpoints
+
+| Method | Path | Auth | Mô tả |
+|---|---|---:|---|
+| POST | `/group` | Bearer | Tạo group |
+| PUT | `/group/{groupId}` | Bearer | Cập nhật group |
+| DELETE | `/group/{groupId}` | Bearer | Xoá group |
+| GET | `/group/{groupId}` | Bearer | Lấy chi tiết group |
+| GET | `/groups` | Bearer | Lấy danh sách group (phân trang) |
+
+---
+
+## Common Auth Header
+
+```http
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+---
+
+## POST `/group`
+
+### Mô tả
+Tạo group mới.
+
+### Request body
+Ví dụ (minh hoạ):
+```json
+{
+  "name": "string",
+  "status": true
+}
+```
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Tạo group thành công",
+  "result": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  },
+  "timestamp": "2026-01-12T08:20:00.000Z",
+  "path": "/group"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 400 | — | Request body không hợp lệ |
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền (không phải ADMIN) |
+
+---
+
+## PUT `/group/{groupId}`
+
+### Mô tả
+Cập nhật thông tin group.
+
+### Path parameters
+| Tên | Kiểu | Bắt buộc | Mô tả |
+|---|---|---:|---|
+| `groupId` | UUID | ✅ | ID group |
+
+### Request body
+`GroupRequest`
+
+Ví dụ (minh hoạ):
+```json
+{
+  "name": "string",
+  "status": true
+}
+```
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Cập nhật group thành công",
+  "result": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  },
+  "timestamp": "2026-01-12T08:21:00.000Z",
+  "path": "/group/{groupId}"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 400 | — | Body không hợp lệ |
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền (không phải ADMIN) |
+| 404 | — | Group không tồn tại |
+
+---
+
+## DELETE `/group/{groupId}`
+
+### Mô tả
+Xoá group theo `groupId`.
+
+### Path parameters
+| Tên | Kiểu | Bắt buộc | Mô tả |
+|---|---|---:|---|
+| `groupId` | UUID | ✅ | ID group |
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Xóa group thành công",
+  "timestamp": "2026-01-12T08:22:00.000Z",
+  "path": "/group/{groupId}"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền (không phải ADMIN) |
+| 404 | — | Group không tồn tại |
+
+---
+
+## GET `/group/{groupId}`
+
+### Mô tả
+Lấy chi tiết group theo ID.
+
+### Path parameters
+| Tên | Kiểu | Bắt buộc | Mô tả |
+|---|---|---:|---|
+| `groupId` | UUID | ✅ | ID group |
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Lấy thông tin group thành công",
+  "result": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  },
+  "timestamp": "2026-01-12T08:23:00.000Z",
+  "path": "/group/{groupId}"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền (không phải ADMIN) |
+| 404 | — | Group không tồn tại |
+
+---
+
+## GET `/groups`
+
+### Mô tả
+Lấy danh sách group theo phân trang.
+
+### Query parameters
+| Tên | Kiểu | Default | Mô tả |
+|---|---:|---:|---|
+| `page` | number | `0` | Trang, bắt đầu từ 0 |
+| `size` | number | `10` | Số item mỗi trang |
+
+Ví dụ:
+```
+GET /groups?page=0&size=10
+```
+
+### Response 200
+`result` là `Page<GroupResponse>`.
+
+```json
+{
+  "code": 1000,
+  "message": "Lấy danh sách group thành công",
+  "result": {
+    "content": [
+      { "id": "..." }
+    ],
+    "totalElements": 123,
+    "totalPages": 13,
+    "size": 10,
+    "number": 0,
+    "first": true,
+    "last": false
+  },
+  "timestamp": "2026-01-12T08:24:00.000Z",
+  "path": "/groups"
+}
+```

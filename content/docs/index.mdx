@@ -1,0 +1,56 @@
+---
+title: Tài liệu Backend API
+description: Trang bắt đầu dành cho frontend tích hợp backend
+---
+
+## 👋 Chào mừng
+
+Tài liệu này dành cho **lập trình viên frontend** khi tích hợp với hệ thống backend.
+
+---
+
+Trước khi đọc chi tiết từng API 👉  
+- [Chuẩn API Response](/docs/api-response)
+
+Trang này mô tả **format response và error chuẩn**, được sử dụng thống nhất cho toàn bộ hệ thống.
+
+---
+
+## 🧭 Lộ trình tích hợp (Integration roadmap)
+
+### 1️⃣ Xác thực (BẮT ĐẦU TỪ ĐÂY)
+
+👉 Đọc:
+- [Authentication Controller](/docs/identity/)
+
+---
+
+### 2️⃣ Identity & Account
+👉 Đọc:
+- Change Password Controller
+- Reset Password (OTP) Controller
+- MFA Controller
+
+Các API này phục vụ:
+- Bảo mật tài khoản
+- Đổi / quên mật khẩu
+- Xác thực nhiều lớp (MFA)
+
+---
+
+### 3️⃣ Phân quyền & Ủy quyền
+👉 Đọc:
+- Permission Controller
+- Group Controller
+
+---
+
+## ❗ Lưu ý quan trọng
+
+- Tất cả API được bảo vệ đều yêu cầu header:
+  ```http
+  Authorization: Bearer <accessToken>
+  ```
+
+---
+

@@ -1,0 +1,172 @@
+---
+title: Permission Controller
+description: Lấy danh sách quyền (permission tree) phục vụ UI phân quyền và feature gating
+---
+
+> API này tuân theo [API Response Convention](/docs/api-response) của hệ thống.
+
+---
+
+## UI mẫu (tham khảo)
+https://bdc.s-tech.info/permission?page=1&limit=20
+
+---
+
+## Base paths
+
+- Global permissions: `/permissions`
+- Group permissions: `/groups/{groupId}/permissions`
+
+---
+
+## Cấu trúc dữ liệu Permission Tree
+
+### Các cấp dữ liệu
+1) **scope**: nhóm quyền lớn (ví dụ: Quyền trên app / Quyền trên web / Quyền thông báo)
+2) **module**: phân nhóm theo module (có thể `null`)
+3) **resource**: nhóm nghiệp vụ / màn hình lớn
+4) **label**: nhãn nhỏ hơn (thường là menu item / sub feature)
+5) **actions**: danh sách action, mỗi action là 1 permission riêng
+
+### Action object
+| Field | Kiểu | Mô tả |
+|---|---|---|
+| `action` | string | Tên action (VIEW/INSERT/UPDATE/DELETE/DETAIL/EXPORT/IMPORT/...) |
+| `id` | UUID | **permissionId** dùng để gán quyền & kiểm tra quyền |
+
+---
+
+## Endpoint list
+
+| Method | Path | Auth | Mô tả |
+|---|---|---:|---|
+| GET | `/permissions` | Bearer | Lấy toàn bộ permission tree |
+| GET | `/groups/{groupId}/permissions` | Bearer | Lấy permission tree của 1 group |
+
+---
+
+## GET `/permissions`
+
+### Mô tả
+Trả về toàn bộ danh sách quyền theo dạng tree, dùng cho:
+- màn hình quản trị quyền (list + filter phía FE)
+- chọn quyền khi tạo/sửa group (từ Group Controller)
+
+### Auth
+Bearer token required
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Lấy danh sách Permission thành công",
+  "result": [
+    {
+      "scope": "Quyền trên app",
+      "modules": [
+        {
+          "module": null,
+          "resources": [
+            {
+              "resource": "Vận hành công ty",
+              "labels": [
+                {
+                  "label": "Ca kíp",
+                  "actions": [
+                    { "action": "VIEW", "id": "46bc8d3a-18d9-4920-99e9-4dbe3739eb7c" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "timestamp": "2026-01-12T08:07:09.062019185Z",
+  "path": "/permissions"
+}
+```
+
+### Notes:
+- `module` có thể là `null` → FE vẫn render bình thường (ví dụ: Quyền trên app / Quyền thông báo)
+- FE **không cần** gọi API phân trang: response đã là tree đầy đủ
+- `action` là string hiển thị/logic, nhưng **permission check** dựa vào `id`
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền truy cập API |
+
+---
+
+## GET `/groups/{groupId}/permissions`
+
+### Mô tả
+Trả về permission tree tương ứng với 1 group.  
+Dùng cho:
+- màn hình **Group detail**
+- hiển thị quyền đã được gán cho group
+- pre-check các checkbox trong UI (những `action.id` thuộc group)
+
+### Auth
+Bearer token required
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+### Path parameters
+| Tên | Kiểu | Bắt buộc | Mô tả |
+|---|---|---:|---|
+| `groupId` | UUID | ✅ | ID của group |
+
+### Response 200
+> Format giống hệt `/permissions` (result vẫn là permission tree)
+
+```json
+{
+  "code": 1000,
+  "message": "Lấy danh sách Permission của group thành công",
+  "result": [
+    {
+      "scope": "Quyền trên web",
+      "modules": [
+        {
+          "module": "Công ty",
+          "resources": [
+            {
+              "resource": "Cài đặt",
+              "labels": [
+                {
+                  "label": "Tool cho ADMIN",
+                  "actions": [
+                    { "action": "VIEW", "id": "c84b0701-6897-4b4f-a187-f4398d5375cd" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "timestamp": "2026-01-12T08:07:09.062019185Z",
+  "path": "/groups/{groupId}/permissions"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | — | Token không hợp lệ / hết hạn |
+| 403 | — | Không có quyền truy cập API |
+| 404 | — | Group không tồn tại |
+
+---
+

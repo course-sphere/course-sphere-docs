@@ -1,0 +1,136 @@
+---
+title: MFA Controller
+description: Thiết lập và xác minh MFA (OTP) cho tài khoản
+---
+
+> API này tuân theo [API Response Convention](/docs/api-response) của hệ thống.
+
+## Base path
+`/auth/mfa`
+
+---
+
+## Tổng quan
+
+MFA (Multi-Factor Authentication) dùng OTP (thường qua Google Authenticator / Authy) để tăng bảo mật.
+
+Controller này cung cấp 2 bước:
+
+1) **Setup**: tạo thông tin cấu hình MFA (issuer, otpAuthUrl, …) để user scan QR
+2) **Verify**: user nhập mã OTP để bật MFA
+
+---
+
+## Quyền truy cập
+
+Chỉ các tài khoản có role:
+- `ADMIN`
+- `DEV`
+
+mới được gọi các API ở đây.
+
+---
+
+## Endpoints
+
+| Method | Path | Auth | Role | Mô tả |
+|---|---|---:|---|---|
+| POST | `/setup` | Bearer | ADMIN/DEV | Tạo thông tin thiết lập OTP (scan QR) |
+| POST | `/verify` | Bearer | ADMIN/DEV | Xác minh OTP để bật MFA |
+
+---
+
+## POST `/auth/mfa/setup`
+
+### Mô tả
+Tạo thông tin thiết lập MFA cho user hiện tại.
+
+Frontend dùng dữ liệu trả về để:
+- hiển thị QR / link otpAuthUrl cho app authenticator
+- hiển thị trạng thái `enabled`
+
+### Auth
+Bearer token required
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+### Request
+Không có request body.
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Thành công",
+  "result": {
+    "issuer": "string",
+    "accountName": "string",
+    "otpAuthUrl": "string",
+    "enabled": true
+  },
+  "timestamp": "2026-01-12T07:58:36.370Z",
+  "path": "/auth/mfa/setup"
+}
+```
+
+#### Ý nghĩa field
+| Field | Mô tả |
+|---|---|
+| `issuer` | Tên hệ thống hiển thị trên app OTP (ví dụ: DIHOUSE) |
+| `accountName` | Định danh account (phoneNumber) |
+| `otpAuthUrl` | URL dạng `otpauth://...` để tạo QR/OTP |
+| `enabled` | MFA đã bật hay chưa |
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | UNAUTHENTICATED | Token không hợp lệ / hết hạn |
+| 403 | FORBIDDEN_ACTION | Không có role ADMIN/DEV |
+| 400 | INVALID_USER_ID | Thiếu/ sai claim `admin_id` / `user_id` |
+
+---
+
+## POST `/auth/mfa/verify`
+
+### Mô tả
+Xác minh OTP để bật MFA.
+
+### Auth
+Bearer token required
+
+```http
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+### Request body
+```json
+{
+  "otp": "string"
+}
+```
+
+### Response 200
+```json
+{
+  "code": 1000,
+  "message": "Thành công",
+  "result": {
+    "enabled": true
+  },
+  "timestamp": "2026-01-12T07:58:56.593Z",
+  "path": "/auth/mfa/verify"
+}
+```
+
+### Error cases
+| HTTP | Code | Tình huống |
+|---|---|---|
+| 401 | UNAUTHENTICATED | Token không hợp lệ / hết hạn |
+| 403 | FORBIDDEN_ACTION | Không có role ADMIN/DEV |
+| 400 | INVALID_USER_ID | Thiếu/ sai claim `admin_id` / `user_id` |
+
+---
+

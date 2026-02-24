@@ -1,0 +1,78 @@
+---
+title: API Response Convention
+description: Quy ước response & error chung cho toàn bộ backend API
+---
+
+## Tổng quan
+
+Tất cả API trong hệ thống **đều trả response theo cùng một format**,  
+bao gồm cả **success** và **error**.
+
+---
+
+## Success response
+
+### Format chuẩn
+```json
+{
+  "code": 1000,
+  "message": "Thành công",
+  "result": {},
+  "timestamp": "2026-01-12T07:31:29.317390654Z",
+  "path": "/api/path"
+}
+```
+
+### Ý nghĩa
+| Field | Mô tả |
+|---|---|
+| `code` | Mã nghiệp vụ (1000 = thành công) |
+| `message` | Thông báo hiển thị cho người dùng |
+| `result` | Dữ liệu trả về (có thể null hoặc object) |
+| `timestamp` | Thời điểm server xử lý |
+| `path` | API path |
+
+---
+
+## Error response
+
+### Format chuẩn
+```json
+{
+  "code": 4003,
+  "message": "Sai thông tin đăng nhập",
+  "timestamp": "2026-01-12T07:22:36.102440932Z",
+  "path": "/auth/login"
+}
+```
+
+### Lưu ý
+- **Không có field `result` khi lỗi**
+- HTTP status **không phản ánh đầy đủ nghiệp vụ**
+- Frontend **phải dựa vào `code`**
+
+---
+
+## Một số code tiêu biểu
+
+| Code | Ý nghĩa |
+|---|---|
+| 1000 | Thành công |
+| 4003 | Sai thông tin đăng nhập |
+| 401x | Lỗi xác thực / token |
+| 403x | Không có quyền |
+| 5xxx | Lỗi hệ thống |
+
+> Danh sách đầy đủ sẽ được cập nhật theo từng module.
+
+---
+
+## Áp dụng
+
+Tất cả controller:
+- Authentication
+- Change Password
+- Permission
+- Group
+- Các module nghiệp vụ khác
+

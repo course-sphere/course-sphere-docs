@@ -1,0 +1,109 @@
+---
+title: Identity & Authentication
+description: Xác thực, phân quyền và quản lý danh tính người dùng
+---
+
+## Giới thiệu chung
+
+Module **Identity** chịu trách nhiệm cho toàn bộ các chức năng liên quan đến:
+
+- Đăng nhập / đăng xuất
+- Quản lý phiên (session)
+- Bảo mật tài khoản (đổi mật khẩu, quên mật khẩu, MFA)
+- Nhóm quyền và phân quyền (RBAC)
+
+---
+
+## Luồng tích hợp tổng quát (Frontend)
+
+1) Người dùng đăng nhập qua API **Authentication**
+2) Frontend nhận `accessToken` + `refreshToken`
+3) Gọi các API protected bằng header:
+   ```
+   Authorization: Bearer <accessToken>
+   ```
+4) Khi access token hết hạn:
+   - Gọi API refresh
+   - Retry request **1 lần duy nhất**
+5) Nếu refresh thất bại → điều hướng về trang đăng nhập
+
+---
+
+## Các controller trong module Identity
+
+Frontend nên đọc tài liệu theo **thứ tự sau**:
+
+### 1️⃣ Authentication
+- [Authentication Controller](/docs/identity/authentication-controller)
+
+Dùng cho:
+- Login
+- Refresh token
+- Logout / logout toàn bộ thiết bị
+- Quản lý session đăng nhập
+
+---
+
+### 2️⃣ Bảo mật tài khoản
+- Change Password Controller  
+- Reset Password Controller  
+- MFA Controller  
+
+Dùng cho:
+- Đổi mật khẩu
+- Quên mật khẩu
+- Xác thực đa yếu tố (nếu bật)
+
+---
+
+### 3️⃣ Phân quyền & nhóm quyền
+- Group Controller  
+- Permission Controller  
+
+Dùng cho:
+- Gán quyền
+- Hiển thị menu / tính năng theo role
+- Màn hình quản trị hệ thống
+
+---
+
+## Format lỗi chuẩn (Error response)
+
+Tất cả API trong hệ thống **đều trả lỗi theo cùng một format**.
+
+### Ví dụ
+```json
+{
+  "code": 4003,
+  "message": "Sai thông tin đăng nhập",
+  "timestamp": "2026-01-12T07:22:36.102440932Z",
+  "path": "/auth/login"
+}
+```
+
+### Ý nghĩa các field
+| Field | Mô tả |
+|---|---|
+| `code` | Mã lỗi nội bộ (dùng để FE xử lý logic) |
+| `message` | Thông báo hiển thị cho người dùng |
+| `timestamp` | Thời điểm lỗi |
+| `path` | API path gây ra lỗi |
+
+---
+
+## UI bên BC
+
+🔗 https://bdc.s-tech.info/permission?page=1&limit=20
+
+UI này minh hoạ:
+- Danh sách quyền
+- Phân trang
+- Cấu trúc RBAC
+- Cách hiển thị quyền theo nhóm
+
+## Bước tiếp theo
+
+👉 Sau khi đọc xong trang này, **đọc tiếp**:
+- [Authentication Controller](/docs/identity/authentication-controller)
+
+
