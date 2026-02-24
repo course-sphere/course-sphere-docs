@@ -5,28 +5,32 @@ description: The overall architecture and frontend navigation flow for creating 
 
 # Course Creation API Flow
 
-Quá trình tạo khóa học trên hệ thống được chia làm 4 giai đoạn (Phases) nối tiếp nhau. Dữ liệu mang tính chất quan hệ cha - con.
+Quá trình tạo khóa học trên hệ thống được chia làm 5 giai đoạn (Phases) nối tiếp nhau (`/course/create/*`). Dữ liệu mang tính chất quan hệ cha - con chặt chẽ.
 
-## 1. Data Hierarchy (Cấu trúc phân cấp)
+## 1. Data Hierarchy & Draft Lifecycle
 
-Để một khóa học hoàn chỉnh, dữ liệu phải được tạo theo đúng thứ tự sau:
-1. **Course (Metadata)** -> Trả về `course_id`
-2. **Module** (Cần `course_id`) -> Trả về `module_id`
-3. **Lesson** (Cần `module_id`) -> Trả về `lesson_id`
-4. **Material** (Cần `lesson_id`) -> Trả về `material_id` (Dữ liệu đa hình)
+Hệ thống hoạt động theo cơ chế **"Tạo nháp 1 lần - Đắp dữ liệu liên tục"**.
+
+1. **Phase 1 (Course Metadata):** Khởi tạo khung xương. Gửi payload lần đầu sẽ tạo ra khóa học với `status: "draft"`. BE trả về `course_id`.
+2. **Phase 2 (Module):** Dùng `course_id` của bản draft trên để thêm các Module. BE trả về `module_id`.
+3. **Phase 3 (Lesson):** Dùng `module_id` để thêm các Lesson vào Module. BE trả về `lesson_id`.
+4. **Phase 4 (Material):** Dùng `lesson_id` để đính kèm nội dung học (Video, Quiz, Reading...). BE trả về `material_id`.
+5. **Phase 5 (Preview & Submit):** Nút chốt hạ. Hành động "Submit" ở bước này bản chất chỉ là một lệnh `PATCH` để đổi `status` từ `draft` sang `pending` (chờ Admin duyệt).
+
+*Lưu ý:* Nếu Teacher không ưng ý ở bước Preview (Phase 5), họ hoàn toàn có thể quay lại (Back) các Phase trước để gọi API `PATCH` / `PUT` chỉnh sửa bản draft này.
 
 ## 2. Frontend Navigation & Action Flow
 
 Frontend (FE) hoạt động dưới dạng một Form Wizard có các bước nối tiếp nhau. Backend (BE) cần nắm rõ logic gọi API ở các nút điều hướng của FE:
 
-- **Nút "Save & Continue" (Next):** - FE sẽ gom data ở màn hình hiện tại và gọi API `POST` (nếu tạo mới) hoặc `PATCH` (nếu cập nhật).
-  - **Bắt buộc:** BE **phải trả về `id`** của entity vừa được tạo. 
+- **Nút "Save & Continue" (Next):**
+  - FE sẽ gom data ở màn hình hiện tại và gọi API `POST` (nếu tạo mới) hoặc `PATCH` (nếu cập nhật).
+  - **Bắt buộc:** BE **phải trả về `id`** của entity vừa được tạo/cập nhật. 
   - Khi nhận được `id` (200/201), FE mới lưu ID này vào state và tự động chuyển user sang trang tiếp theo.
 
 - **Nút "Back" (Previous):**
-  - FE chỉ thực hiện chuyển trang lùi lại (Route Back).
-  - Khi render lại trang cũ, FE sẽ gọi API `GET /{id}` để lấy lại data cũ và điền vào form cho user xem/sửa.
+  - FE thực hiện chuyển trang lùi lại.
+  - Khi render lại trang cũ, FE sẽ tự động gọi API `GET /{id}` để lấy lại data cũ từ BE và fill vào form cho user tiếp tục chỉnh sửa.
 
 - **Trạng thái "Draft":**
-  - Ngay từ Phase 1, khi bấm Continue, khóa học đã được lưu vào DB dưới trạng thái `status: "draft"`. 
-  - Nó sẽ ở trạng thái Draft cho đến khi user bấm "Submit for Review" ở bước cuối cùng.
+  - Khóa học sẽ nằm im ở trạng thái `draft` trong suốt quá trình thao tác từ Phase 1 đến Phase 4, cho đến khi user bấm "Submit for Review" ở Phase 5.
