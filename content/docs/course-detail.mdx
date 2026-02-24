@@ -1,5 +1,5 @@
 ---
-title: Course Detail Page
+title: Course Detail Page (Trang course/{id})
 description: API endpoints for rendering the public course detail page and handling enrollment/cart logic.
 ---
 
@@ -162,7 +162,7 @@ Nếu khóa học là khóa trả phí (`is_free: false`), user sẽ thêm khóa
 
 ### Add to Cart
 - **Method:** `POST`
-- **Endpoint:** `/api/v1/cart/items`
+- **Endpoint:** `/cart/items`
 - **Auth:** Required
 
 **Request Payload:**
@@ -177,5 +177,52 @@ Nếu khóa học là khóa trả phí (`is_free: false`), user sẽ thêm khóa
 {
   "success": true,
   "message": "Course added to cart"
+}
+```
+
+## 6. Get Preview Material Content
+
+API này dùng để lấy nội dung chi tiết của một bài học (Link video, Nội dung đọc...) để user xem thử trước khi mua. 
+
+**Trigger từ Frontend:** Khi user click vào một bài học có nhãn `Preview` trong phần Course Curriculum, Frontend sẽ bật Modal và gọi API này để lấy nội dung phát.
+
+- **Method:** `GET`
+- **Endpoint:** `/materials/{materialId}/preview`
+- **Auth:** Public
+
+Checkis_preview:
+- Nếu **True**: Trả về dữ liệu chi tiết.
+- Nếu **False**: Trả về mã lỗi `403 Forbidden` ngay lập tức để chống user cố tình gọi API lấy trộm nội dung bài học thu phí.
+
+### Expected Response (200 OK)
+
+Dữ liệu trả về sẽ tùy thuộc vào `item_type` của material đó (Giống Phase 4 của Course Creation). Dưới đây là ví dụ trả về một Video học thử:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "mat_1",
+    "lesson_id": "les_1",
+    "item_type": "video",
+    "title": "What are Hooks?",
+    "video_data": {
+      "video_url": "[https://s3.bucket.com/video_preview_1.mp4](https://s3.bucket.com/video_preview_1.mp4)",
+      "duration": 15,
+      "description": "<p>Đây là video học thử của khóa học...</p>"
+    }
+  }
+}
+```
+
+### Error Response (403 Forbidden - Khi bài học không cho phép học thử)
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "FORBIDDEN_MATERIAL",
+    "message": "This material is not available for preview. Please enroll in the course to view this content."
+  }
 }
 ```
