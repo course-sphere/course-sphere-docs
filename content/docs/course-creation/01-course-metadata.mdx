@@ -1,0 +1,57 @@
+---
+title: Phase 1 - Course Metadata
+description: API payload for creating the basic information of a course.
+---
+
+# Phase 1: Course Metadata
+
+Giai đoạn khởi tạo khóa học. Frontend sẽ gửi thông tin cơ bản, thiết lập giá bán và các yêu cầu đầu vào.
+
+## Create / Update Course
+
+- **Method:** `POST` / `PATCH`
+- **Endpoint:** `/api/v1/courses` (POST) hoặc `/api/v1/courses/{id}` (PATCH)
+
+### Request Payload
+
+```json
+{
+  "title": "Web dev 2026",
+  "subtitle": "Web dev 2026 - Subtitle",
+  "description": "Web dev 2026 - Description Web dev 2026 - Description",
+  "category": [
+    {
+      "id": "2072432640",
+      "text": "Web dev 2026 - Category"
+    }
+  ],
+  "level": "intermediate",
+  "thumbnail_url": "https://s3.bucket.../thumbnail.jpg",
+  "promo_video_url": "https://www.youtube.com/watch?v=R6cM5ww7g-o",
+  "is_free": false,
+  "price": 19.99,
+  "discount_price": 10,
+  "prerequisites": [
+    {
+      "course_id": "course-3",
+      "course_title": "UI/UX Design Fundamentals"
+    }
+  ],
+  "requirements": [ { "value": "Req 1" }, { "value": "Req 2" } ],
+  "learning_objectives": [ { "value": "Objecttive 1" } ],
+  "target_audience": [ { "value": "Audience 1" } ]
+}
+```
+
+### Expected Response
+BE cần trả về status `201 Created` hoặc `200 OK` kèm theo ID của khóa học. FE sẽ dùng ID này cho Phase 2.
+Example:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "course-1771579477259",
+    "status": "draft"
+  }
+}
+```

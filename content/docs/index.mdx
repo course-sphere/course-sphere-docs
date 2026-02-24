@@ -1,56 +1,25 @@
 ---
 title: Tài liệu Backend API
-description: Trang bắt đầu dành cho frontend tích hợp backend
+description: Trang bắt đầu dành cho frontend và backend tích hợp hệ thống Course Sphere
 ---
 
-## 👋 Chào mừng
+## Chào mừng
 
-Tài liệu này dành cho **lập trình viên frontend** khi tích hợp với hệ thống backend.
+Tài liệu này đóng vai trò là **API Contract** (Hợp đồng giao tiếp) giữa team Frontend và Backend cho nền tảng **Course Sphere**. 
 
----
-
-Trước khi đọc chi tiết từng API 👉  
-- [Chuẩn API Response](/docs/api-response)
-
-Trang này mô tả **format response và error chuẩn**, được sử dụng thống nhất cho toàn bộ hệ thống.
+Mục tiêu là đảm bảo payload và cấu trúc dữ liệu luôn đồng nhất, giúp đẩy nhanh tốc độ ship code của cả hai team!
 
 ---
 
-## 🧭 Lộ trình tích hợp (Integration roadmap)
+## Lộ trình tích hợp (Integration Roadmap)
 
-### 1️⃣ Xác thực (BẮT ĐẦU TỪ ĐÂY)
+### 1️⃣ Flow 1: Course Creation (Instructor)
+Luồng này cho phép giáo viên tạo và xây dựng khóa học từ A-Z. Dữ liệu được tạo theo cấu trúc phân cấp (Cha -> Con).
 
-👉 Đọc:
-- [Authentication Controller](/docs/identity/)
-
----
-
-### 2️⃣ Identity & Account
-👉 Đọc:
-- Change Password Controller
-- Reset Password (OTP) Controller
-- MFA Controller
-
-Các API này phục vụ:
-- Bảo mật tài khoản
-- Đổi / quên mật khẩu
-- Xác thực nhiều lớp (MFA)
+👉 Đọc chi tiết:
+1. [Phase 1: Course Metadata](/docs/course-creation/01-course-metadata)
+2. [Phase 2: Module Builder](/docs/course-creation/02-module-builder)
+3. [Phase 3: Lesson Manager](/docs/course-creation/03-lesson-manager)
+4. [Phase 4: Materials (Polymorphic)](/docs/course-creation/04-materials)
 
 ---
-
-### 3️⃣ Phân quyền & Ủy quyền
-👉 Đọc:
-- Permission Controller
-- Group Controller
-
----
-
-## ❗ Lưu ý quan trọng
-
-- Tất cả API được bảo vệ đều yêu cầu header:
-  ```http
-  Authorization: Bearer <accessToken>
-  ```
-
----
-

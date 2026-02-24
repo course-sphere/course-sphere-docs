@@ -1,0 +1,160 @@
+---
+title: Phase 4 - Materials (Polymorphic)
+description: API payloads for various types of learning materials (Video, Reading, Quiz, Coding, File).
+---
+
+# Phase 4: Materials
+
+Đây là giai đoạn tạo nội dung thực tế cho bài học. Dữ liệu gửi lên là **Đa hình (Polymorphic)**, phụ thuộc vào trường `item_type`. Frontend luôn gửi kèm `lesson_id`.
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/lessons/{lesson_id}/materials`
+
+---
+
+## 1. Video Material
+
+```json
+{
+  "lesson_id": "lesson-1771579541228-nqabf0si8",
+  "item_type": "video",
+  "sort_order": 1,
+  "title": "Video 1",
+  "is_required": true,
+  "is_preview": true,
+  "video_data": {
+    "video_url": "https://www.youtube.com/watch?v=Hgj5a1_zNds",
+    "duration": 15,
+    "description": "<p class=\"text-node\">No desc</p>"
+  }
+}
+```
+
+---
+
+## 2. Reading Material
+
+```json
+{
+  "lesson_id": "lesson-1771579541228-nqabf0si8",
+  "item_type": "reading",
+  "sort_order": 2,
+  "title": "Reading 1",
+  "is_required": true,
+  "is_preview": false,
+  "reading_data": {
+    "content": "<p class=\"text-node\"><strong>Content</strong></p>",
+    "duration": 5
+  }
+}
+```
+
+---
+
+## 3. Quiz Material
+
+```json
+{
+  "lesson_id": "lesson-1771579541228-nqabf0si8",
+  "item_type": "quiz",
+  "sort_order": 3,
+  "title": "Quiz boss",
+  "is_required": true,
+  "is_preview": false,
+  "quiz_data": {
+    "description": "<p class=\"text-node\">Do not use AI</p>",
+    "time_limit_minutes": 15,
+    "passing_score": 50,
+    "questions": [
+      {
+        "id": "q-1771579690004-3th1zupyv",
+        "title": "What is 1+1?",
+        "question_type": "single",
+        "score": 10,
+        "explanation": "<p class=\"text-node\">1+1=2, No talk to much</p>",
+        "answers": [
+          { "id": "a-1", "content": "2", "is_correct": true },
+          { "id": "a-2", "content": "3", "is_correct": false }
+        ]
+      },
+      {
+        "id": "q-1771579745683-vcntr71k0",
+        "title": "Is 1+1=2?",
+        "question_type": "true_false",
+        "score": 1,
+        "explanation": "<p class=\"text-node\">No</p>",
+        "answers": [
+          { "id": "a-3", "content": "True", "is_correct": true },
+          { "id": "a-4", "content": "False", "is_correct": false }
+        ]
+      },
+      {
+        "id": "q-1771579779139-0lz1vp4br",
+        "title": "1+1=?",
+        "question_type": "multiple",
+        "score": 1,
+        "explanation": "<p class=\"text-node\">nah</p>",
+        "answers": [
+          { "id": "a-5", "content": "2", "is_correct": true },
+          { "id": "a-6", "content": "3-1", "is_correct": true },
+          { "id": "a-7", "content": "10", "is_correct": false }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 4. Coding Material
+
+```json
+{
+  "lesson_id": "lesson-1771579541228-nqabf0si8",
+  "item_type": "coding",
+  "sort_order": 4,
+  "title": "Two Sum problem",
+  "is_required": true,
+  "is_preview": false,
+  "coding_data": {
+    "description": "No desc",
+    "instructions": "<p class=\"text-node\"><strong>No desc</strong></p>",
+    "starter_code": "package main\n\nimport \"fmt\"\n\nfunc main() {\n    // Write your code here\n    \n}\n",
+    "language": "go",
+    "max_score": 100,
+    "due_days": 7
+  }
+}
+```
+
+---
+
+## 5. File Material
+
+```json
+{
+  "lesson_id": "lesson-1771579541228-nqabf0si8",
+  "item_type": "file",
+  "sort_order": 5,
+  "title": "A02-B2-01-01-6",
+  "is_required": true,
+  "is_preview": false,
+  "file_data": {
+    "file_url": "https://s3.your-bucket.com/uploads/1771580078842_A02-B2-01-01-6.pdf",
+    "file_type": "pdf",
+    "file_size": 1074
+  }
+}
+```
+
+### Expected Response
+BE trả về ID của Material vừa được tạo hoặc update thành công.
+```json
+{
+  "success": true,
+  "data": {
+    "id": "material-123456"
+  }
+}
+```

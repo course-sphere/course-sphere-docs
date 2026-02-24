@@ -1,0 +1,36 @@
+---
+title: Phase 2 - Module Builder
+description: API payload for creating modules inside a course.
+---
+
+# Phase 2: Module Builder
+
+Một khóa học có thể có nhiều Module (Chương). Frontend sẽ truyền `course_id` có được từ Phase 1.
+
+## Create Module
+
+- **Method:** `POST`
+- **Endpoint:** `/api/v1/courses/{course_id}/modules`
+
+### Request Payload
+
+```json
+{
+  "course_id": "course-1771579477259",
+  "title": "Module 1",
+  "description": "Test",
+  "sort_order": 1
+}
+```
+
+### Expected Response
+Trả về `module_id` để FE tiếp tục tạo Lesson bên trong nó.
+Example:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "module-1771579512213-ccgys56xu"
+  }
+}
+```
